@@ -66,5 +66,5 @@ def is_trash_can(path):
     trash_can_feats = get_trash_can_feats()
     image_feat = make_feat(path)
     similarity = average_similarity(image_feat, trash_can_feats)
-    return similarity <= 25, similarity
+    return similarity <= 22, similarity
 

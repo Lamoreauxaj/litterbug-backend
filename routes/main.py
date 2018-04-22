@@ -1,5 +1,5 @@
 from app import app
-from flask import Blueprint, request, Response, jsonify, redirect, session
+from flask import Blueprint, request, Response, jsonify, redirect, session, make_response
 from flask.json import loads
 from os.path import join
 from werkzeug import secure_filename
@@ -16,7 +16,6 @@ import requests
 
 main = Blueprint('main', __name__, template_folder='../views')
 
-# session['credentials'] = credentials.access_token
 
 @main.after_request
 def after_request(response):
@@ -24,11 +23,12 @@ def after_request(response):
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, DELETE, PUT'
     return response
 
+
 @main.route('/', methods=['GET'])
 def index():
     if app.debug:
         return redirect('http://localhost:8080/')
-    return render_template('static/index.html')
+    return render_template('index.html')
 
 
 @main.route('/login', methods=['GET'])
@@ -41,7 +41,18 @@ def login():
         access_type='offline')
 
     auth_uri = flow.step1_get_authorize_url()
+    response = make_response()
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, DELETE, PUT'
     return redirect(auth_uri)
+
+
+@main.route('/me', methods=['GET'])
+def me():
+    if 'credentials' in session:
+        return jsonify(session['credentials'])
+    else:
+        return 'Not logged in', 400
 
 
 @main.route('/logout', methods=['GET'])
@@ -65,16 +76,14 @@ def oauth2callback():
             pass
 
         if credentials:
-            session['credentials'] = credentials.access_token
             userinfo = requests.get('https://www.googleapis.com/oauth2/v2/userinfo', headers={'Authorization': 'OAuth %s' % credentials.access_token}).text
             userinfo = (loads(userinfo))
-            # print(userinfo)
-            if User.query.filter_by(email=userinfo['email']).first():
-                pass
-            else:
+            user = User.query.filter_by(email=userinfo['email']).first()
+            if not user:
                 user = User(id=userinfo['id'],email=userinfo['email'],name=userinfo['name'],litterbug=0,picture=userinfo['picture'])
                 db.session.add(user)
                 db.session.commit()
+            session['credentials'] = {'email':user.email,'name':user.name,'litterbug':user.litterbug,'picture':user.picture}
 
     return redirect('/')
 
@@ -87,14 +96,8 @@ def validate_image():
             file = request.files[f]
         if not file:
             return 'Not file found', 400
-        # file = request.files[request.form['filename']]
         filename = secure_filename(file.filename)
         filepath = join(tempdir, filename)
         file.save(filepath)
-        # print(filepath)
         sim = is_trash_can(filepath)
-        # print(sim)
-        # os.remove(filepath)
-        # os.rmdir(tempdir)
-        # call(['rm', filepath, '-r'])
     return jsonify({ 'valid': sim[0], 'similarity': sim[1] }), 200
