@@ -10,10 +10,11 @@ main = Blueprint('main', __name__, template_folder='../views')
 
 # session['credentials'] = credentials.access_token
 
-@main.before_request
-def before_request():
+@main.after_request
+def after_request(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, DELETE, PUT'
+    return response
 
 @main.route('/', methods=['GET'])
 def index():
