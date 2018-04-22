@@ -10,6 +10,11 @@ main = Blueprint('main', __name__, template_folder='../views')
 
 # session['credentials'] = credentials.access_token
 
+@main.before_request
+def before_request():
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, DELETE, PUT'
+
 @main.route('/', methods=['GET'])
 def index():
     if flask.debug:
