@@ -8,9 +8,10 @@ from scipy import spatial
 from PIL import Image
 import numpy as np
 import indicoio
-from config.main import INDICO_API_KEY
+# from config.main import INDICO_API_KEY
 
-indicoio.config.api_key = INDICO_API_KEY
+# indicoio.config.api_key = INDICO_API_KEY
+indicoio.config.api_key = '9abbc6fbda605c77c14c9d2b3493eb0b'
 
 def make_paths_list(location):
     print(__file__)
@@ -57,7 +58,7 @@ def get_trash_can_feats():
     try:
         feats = pickle.load(open(pkl_trash_can_path, 'rb'))
     except IOError:
-        feats = make_feats(make_paths_list(join(os.path.dirname(__file__), 'trash_cans')))
+        feats = make_feats(make_paths_list(join(os.path.dirname(__file__), 'good_trash_cans')))
         pickle.dump(feats, open(pkl_trash_can_path, 'wb'))
     return feats
 
@@ -68,3 +69,4 @@ def is_trash_can(path):
     similarity = average_similarity(image_feat, trash_can_feats)
     return similarity <= 22, similarity
 
+get_trash_can_feats()
