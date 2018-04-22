@@ -1,5 +1,5 @@
 from app import app
-from flask import Blueprint, request, Response, jsonify, redirect, session, make_response
+from flask import Blueprint, request, Response, jsonify, redirect, session, make_response, render_template
 from flask.json import loads
 from os.path import join
 from werkzeug import secure_filename
@@ -14,7 +14,7 @@ from app import db
 from subprocess import call
 import requests
 
-main = Blueprint('main', __name__, template_folder='../views')
+main = Blueprint('main', __name__, template_folder='../static')
 
 
 @main.after_request
