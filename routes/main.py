@@ -4,7 +4,7 @@ from flask.json import loads
 from os.path import join
 from werkzeug import secure_filename
 from services.image_reg import is_trash_can
-from tempfile import mkdtemp
+from tempfile import TemporaryDirectory
 from oauth2client.client import OAuth2WebServerFlow, AccessTokenCredentials
 from config.main import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 from apiclient import discovery
@@ -81,20 +81,20 @@ def oauth2callback():
 
 @main.route('/validate-image', methods=['POST'])
 def validate_image():
-    tempdir = mkdtemp()
-    file = None
-    for f in request.files:
-        file = request.files[f]
-    if not file:
-        return 'Not file found', 400
-    # file = request.files[request.form['filename']]
-    filename = secure_filename(file.filename)
-    filepath = join(tempdir, filename)
-    file.save(filepath)
-    # print(filepath)
-    sim = is_trash_can(filepath)
-    # print(sim)
-    # os.remove(filepath)
-    # os.rmdir(tempdir)
-    call(['rm', filepath, '-r'])
+    with TemporaryDirectory() as tempdir:
+        file = None
+        for f in request.files:
+            file = request.files[f]
+        if not file:
+            return 'Not file found', 400
+        # file = request.files[request.form['filename']]
+        filename = secure_filename(file.filename)
+        filepath = join(tempdir, filename)
+        file.save(filepath)
+        # print(filepath)
+        sim = is_trash_can(filepath)
+        # print(sim)
+        # os.remove(filepath)
+        # os.rmdir(tempdir)
+        # call(['rm', filepath, '-r'])
     return jsonify({ 'valid': sim[0], 'similarity': sim[1] }), 200
