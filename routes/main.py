@@ -1,3 +1,4 @@
+from app import app
 from flask import Blueprint, request, Response, jsonify, redirect, session
 from os.path import join
 from werkzeug import secure_filename
@@ -18,7 +19,7 @@ def after_request(response):
 
 @main.route('/', methods=['GET'])
 def index():
-    if flask.debug:
+    if app.debug:
         return redirect('http://localhost:8080/')
     return render_template('static/index.html')
 
@@ -56,8 +57,9 @@ def oauth2callback():
         except Exception as e:
             pass
 
+        print(credentials)
         if credentials:
-            session['credentials'] = credentials
+            session['credentials'] = credentials.access_token
 
     return redirect('/')
 
