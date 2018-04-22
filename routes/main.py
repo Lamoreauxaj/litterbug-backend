@@ -11,6 +11,7 @@ from apiclient import discovery
 from httplib2 import Http
 from models.user import User
 from app import db
+from subprocess import call
 import requests
 
 main = Blueprint('main', __name__, template_folder='../views')
@@ -93,6 +94,7 @@ def validate_image():
     # print(filepath)
     sim = is_trash_can(filepath)
     # print(sim)
-    os.remove(filepath)
-    os.rmdir(tempdir)
+    # os.remove(filepath)
+    # os.rmdir(tempdir)
+    call(['rm', filepath, '-r'])
     return jsonify({ 'valid': sim[0], 'similarity': sim[1] }), 200
