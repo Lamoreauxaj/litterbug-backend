@@ -8,8 +8,9 @@ from scipy import spatial
 from PIL import Image
 import numpy as np
 import indicoio
+from config.main import INDICO_API_KEY
 
-indicoio.config.api_key = '9abbc6fbda605c77c14c9d2b3493eb0b'
+indicoio.config.api_key = INDICO_API_KEY
 
 def make_paths_list(location):
     print(__file__)
