@@ -1,11 +1,17 @@
 from app import app
 from flask import Blueprint, request, Response, jsonify, redirect, session
+from flask.json import loads
 from os.path import join
 from werkzeug import secure_filename
 from services.image_reg import is_trash_can
 from tempfile import mkdtemp
 from oauth2client.client import OAuth2WebServerFlow, AccessTokenCredentials
 from config.main import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+from apiclient import discovery
+from httplib2 import Http
+from models.user import User
+from app import db
+import requests
 
 main = Blueprint('main', __name__, template_folder='../views')
 
@@ -28,7 +34,7 @@ def index():
 def login():
     flow = OAuth2WebServerFlow(client_id=GOOGLE_CLIENT_ID,
         client_secret=GOOGLE_CLIENT_SECRET,
-        scope=['profile','email'],
+        scope=['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'],
         redirect_uri='http://localhost:5000/oauth2callback',
         approval_prompt='force',
         access_type='offline')
@@ -49,7 +55,7 @@ def logout():
 def oauth2callback():
     code = request.args['code']
     if code:
-        flow = OAuth2WebServerFlow(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, ['profile', 'email'])
+        flow = OAuth2WebServerFlow(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'])
         flow.redirect_uri = request.base_url
         credentials = None
         try:
@@ -57,9 +63,17 @@ def oauth2callback():
         except Exception as e:
             pass
 
-        print(credentials)
         if credentials:
             session['credentials'] = credentials.access_token
+            userinfo = requests.get('https://www.googleapis.com/oauth2/v2/userinfo', headers={'Authorization': 'OAuth %s' % credentials.access_token}).text
+            userinfo = (loads(userinfo))
+            # print(userinfo)
+            if User.query.filter_by(email=userinfo['email']).first():
+                pass
+            else:
+                user = User(id=userinfo['id'],email=userinfo['email'],name=userinfo['name'],litterbug=0,picture=userinfo['picture'])
+                db.session.add(user)
+                db.session.commit()
 
     return redirect('/')
 
@@ -79,4 +93,6 @@ def validate_image():
     # print(filepath)
     sim = is_trash_can(filepath)
     # print(sim)
+    os.remove(filepath)
+    os.rmdir(tempdir)
     return jsonify({ 'valid': sim[0], 'similarity': sim[1] }), 200
